@@ -25,7 +25,6 @@ httpserver.add_get("/",|req,res|{
 use cileamzh::HttpServer;
 
 fn main(){
-
     let httpserver=HttpServer::new()?;
 
     httpserver.add_get("/",|req,res|{
