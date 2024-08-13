@@ -24,7 +24,7 @@ httpserver.add_get("/",|req,res|{
 
 将下列代码添加到你的main.rs中
 ---------------------
-
+```Rust
 use cileamzh::HttpServer;
 
 fn main(){
@@ -38,7 +38,7 @@ fn main(){
     httpserver.listen("127.0.0.1:8080")?;
 
 }
-
+```
 api文档
 =========
 
