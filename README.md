@@ -25,7 +25,7 @@ httpserver.add_get("/",|req,res|{
 将下列代码添加到你的main.rs中
 ---------------------
 ```Rust
-use cileamzh::HttpServer;
+use cileamzh-web::HttpServer;
 
 fn main(){
     let httpserver=HttpServer::new()?;
