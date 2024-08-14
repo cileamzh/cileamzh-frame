@@ -12,15 +12,11 @@ Quick Start
 -----------------------------------
 将cileamzh-web 放入你的rust项目依赖中。
 通过HttpServer::new()来快速获得一个HttpServer实例
-let httpserver=HttpServer::new()?;
 
 .listen()方法用于设置要监听的ip同时启动服务器
-httpserver.listen("127.0.0.1:8080")?;
+
 
 通过.add_get()方法可快速添加一个get请求的服务器接口
-httpserver.add_get("/",|req,res|{
-    res.set_body("hello_world");
-});
 
 将下列代码添加到你的main.rs中
 ---------------------

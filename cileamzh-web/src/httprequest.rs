@@ -1,13 +1,13 @@
 use std::{collections::HashMap, io::Result};
 
 pub struct HttpRequest {
-    pub params: String,
-    pub path: String,
-    pub method: String,
-    pub protocol: String,
-    pub headers: HashMap<String, String>,
-    pub body: String,
-    pub binary: Vec<u8>,
+    params: String,
+    path: String,
+    method: String,
+    protocol: String,
+    headers: HashMap<String, String>,
+    body: String,
+    binary: Vec<u8>,
 }
 impl HttpRequest {
     pub fn new() -> Self {
@@ -25,6 +25,10 @@ impl HttpRequest {
         let mut headers: HashMap<String, String> = HashMap::new();
         let parts: Vec<&str> = req_str.split("\r\n\r\n").collect();
 
+        match headers.get("Content-Type") {
+            Some(str) => {}
+            None => {}
+        }
         let body = if parts.len() > 1 {
             parts[1].to_string()
         } else {

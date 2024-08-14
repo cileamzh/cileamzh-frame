@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 pub struct HttpResponse {
     status: String,
-    headers: HashMap<String, String>,
+    header: HashMap<String, String>,
     body: String,
     binary: Vec<u8>,
 }
@@ -10,8 +10,8 @@ pub struct HttpResponse {
 impl HttpResponse {
     pub fn new() -> Self {
         HttpResponse {
-            status: "HTTP/1.1 200 OK".to_owned(),
-            headers: HashMap::new(),
+            status: String::new(),
+            header: HashMap::new(),
             body: String::new(),
             binary: Vec::new(),
         }
@@ -22,7 +22,7 @@ impl HttpResponse {
     }
 
     pub fn set_header(&mut self, key: &str, value: &str) {
-        self.headers.insert(key.to_string(), value.to_string());
+        self.header.insert(key.to_string(), value.to_string());
     }
 
     pub fn set_status(&mut self, status: String) {
@@ -37,13 +37,17 @@ impl HttpResponse {
         &self.body
     }
 
-    pub fn get_binary(&mut self) -> &Vec<u8> {
+    pub fn get_binary(&self) -> &Vec<u8> {
         &self.binary
     }
 
     pub fn get_header(&self) -> String {
-        let mut response = format!("{}\r\nContent-Length: {}\r\n", self.status, self.body.len());
-        for (key, value) in &self.headers {
+        let mut response = format!(
+            "{}\r\nContent-Length: {}\r\n",
+            self.status,
+            self.body.len() + self.binary.len()
+        );
+        for (key, value) in &self.header {
             response.push_str(&format!("{}: {}\r\n", key, value));
         }
         response.push_str("\r\n");
