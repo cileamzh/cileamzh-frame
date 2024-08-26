@@ -33,7 +33,7 @@ fn main(){
     httpserver.add_get("/",|req,res|{
     
     res.set_body("hello_world");
-});
+    });
 
     httpserver.listen("127.0.0.1:8080")?;
 
