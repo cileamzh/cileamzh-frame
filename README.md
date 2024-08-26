@@ -21,7 +21,7 @@ Getting Start
 通过.add_get()方法可快速添加一个get请求的服务器接口
 
 将下列代码添加到你的main.rs中
----------------------
+------------------------------------
 ```rust
 use cileamzh-web::HttpServer;
 
