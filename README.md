@@ -1,12 +1,14 @@
-cileamzh-frame
-===============================
-cileamzh-frame 是一个由rust开发的简易的后端框架,
+# Cileamzh-frame
+
+Cileamzh-frame 是一个由rust开发的简易的后端框架,
 
 得益于rust先天多线程的支持和性能cileamzh-web服务器有优
 
-秀的高并发处理能力，同时支持二进制传输如果你想快速搭建一个简
+秀的高并发处理能力，同时支持二进制传输
 
-单的服务器，cileamzh-web是一个不错的选择
+如果你想快速搭建一个简单的服务器，
+
+cileamzh-web是一个不错的选择
 
 Quick Start
 -----------------------------------
@@ -20,7 +22,7 @@ Quick Start
 
 将下列代码添加到你的main.rs中
 ---------------------
-```Rust
+```rust
 use cileamzh-web::HttpServer;
 
 fn main(){

@@ -1,2 +1,9 @@
+[package]
+edition = "2021"
+name = "cileamzh-frame"
+version = "0.0.0"
+[dependencies]
+cileamzh-macro = {path = "./cileamzh-macro"}
+cileamzh-web = {path = "./cileamzh-web"}
 [workspace]
-members = ["cileamzh-web"]
+members = ["cileamzh-macro", "cileamzh-web"]
