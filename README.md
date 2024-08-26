@@ -10,7 +10,7 @@ Cileamzh-frame 是一个由rust开发的简易的后端框架,
 
 cileamzh-web是一个不错的选择
 
-Quick Start
+Quickly Start
 -----------------------------------
 将cileamzh-web 放入你的rust项目依赖中。
 通过HttpServer::new()来快速获得一个HttpServer实例
@@ -31,7 +31,7 @@ fn main(){
     httpserver.add_get("/",|req,res|{
     
     res.set_body("hello_world");
-});
+    });
 
     httpserver.listen("127.0.0.1:8080")?;
 
