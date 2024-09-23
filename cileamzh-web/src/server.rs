@@ -126,8 +126,8 @@ impl HttpServer {
                 break;
             }
         }
-        let req: HttpRequest<Vec<u8>> = HttpRequest::new();
-        let res: HttpResponse<Vec<u8>> = HttpResponse::new();
+        let req: HttpRequest = HttpRequest::new();
+        let res: HttpResponse = HttpResponse::new();
         self._through_ware(req, res);
         Ok(())
     }

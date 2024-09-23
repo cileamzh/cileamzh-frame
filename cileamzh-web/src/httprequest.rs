@@ -1,40 +1,89 @@
-use std::collections::HashMap;
+use std::fmt::Error;
 
-use crate::Body;
-
-pub struct HttpRequest<T = Vec<u8>> {
-    params: HashMap<String, String>,
+pub struct HttpRequest {
+    pub params: String,
     pub path: String,
     pub method: String,
     pub protocol: String,
-    header: HashMap<String, String>,
-    pub body: T,
+    header: String,
+    body: String,
+    pub binary: Vec<u8>,
 }
-impl<T: Body + Default> HttpRequest<T> {
+impl HttpRequest {
     pub fn new() -> Self {
         Self {
-            params: HashMap::new(),
+            params: String::new(),
             path: String::new(),
             method: String::new(),
             protocol: String::new(),
-            header: HashMap::new(),
-            body: T::default(),
+            header: String::new(),
+            body: String::new(),
+            binary: Vec::new(),
         }
     }
 
-    pub fn set_header(&mut self, k: String, v: String) {
-        self.header.insert(k, v);
+    pub fn from(_buf: Vec<u8>) -> Self {
+        let res = Self {
+            params: String::new(),
+            path: String::new(),
+            method: String::new(),
+            protocol: String::new(),
+            header: String::new(),
+            body: String::new(),
+            binary: Vec::new(),
+        };
+        res
     }
 
-    pub fn set_params(&mut self, k: String, v: String) {
-        self.params.insert(k, v);
-    }
-    pub fn get_header(&self, key: &str) -> Option<&String> {
-        self.header.get(key)
-    }
-    pub fn get_params(&self, k: &str) -> Option<&String> {
-        self.params.get(k)
+    pub fn cookies(&mut self, cookie: &str) {
+        self.header.push_str("Cookie: ");
+        self.header.push_str(cookie);
+        self.header.push_str("\r\n");
     }
 
-    pub fn join_header(&self) {}
+    pub fn push_header(&mut self, header: &str) {
+        self.header.push_str(header);
+        self.header.push_str("\r\n");
+    }
+
+    pub fn body(&mut self, body: &str) {
+        self.body.push_str(body);
+    }
+
+    pub fn formot(&self) -> Vec<u8> {
+        let mut buf: Vec<u8> = Vec::new();
+        buf.append(&mut self.method.to_vec_u8());
+        buf.append(&mut " ".to_vec_u8());
+        buf.append(&mut self.path.to_vec_u8());
+        buf.append(&mut self.params.to_vec_u8());
+        buf.append(&mut " ".to_vec_u8());
+        buf.append(&mut self.protocol.to_vec_u8());
+        buf.append(&mut "\r\n".to_vec_u8());
+        buf.append(&mut self.header.to_vec_u8());
+        buf.append(&mut "\r\n\r\n".to_vec_u8());
+        buf.append(&mut self.body.to_vec_u8());
+        buf.append(&mut self.binary.to_vec());
+        buf
+    }
+}
+
+trait ToVec {
+    fn to_vec_u8(&self) -> Vec<u8>;
+}
+
+impl ToVec for String {
+    fn to_vec_u8(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+impl ToVec for &str {
+    fn to_vec_u8(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+fn split(a: Vec<u8>, p: Vec<u8>) -> Result<(), Error> {
+    panic!("{}", "len is wrong");
+    Ok(())
 }
