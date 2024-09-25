@@ -7,5 +7,4 @@ pub mod ware;
 
 pub use httprequest::HttpRequest;
 pub use httpresponse::HttpResponse;
-pub use meb::DealHttp;
 pub use server::HttpServer;

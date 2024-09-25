@@ -1,6 +1,6 @@
-use crate::{meb::DealHttp, ware::Ware, HttpRequest, HttpResponse};
+use crate::{ware::Ware, HttpRequest, HttpResponse};
 use std::{
-    io::Read,
+    io::{Read, Write},
     net::{TcpListener, TcpStream},
     path::Path,
 };
@@ -45,14 +45,12 @@ impl HttpServer {
         if self.lst.len() == 0 {
             let lst = TcpListener::bind(format!("{}:{}", host, port))?;
             self.lst.push(lst);
-            println!("server listening {}:{}", host, port);
             for stream in self.lst[0].incoming() {
                 let stream = stream?;
                 self.handle_stream(stream).unwrap();
             }
             Ok(())
         } else {
-            println!("Server can't listen twice");
             Ok(())
         }
     }
@@ -95,8 +93,8 @@ impl HttpServer {
         }
     }
 
-    fn _through_ware(&self, mut req: HttpRequest, mut res: HttpResponse) {
-        let i: usize = 0;
+    fn through_ware(&self, mut req: HttpRequest, mut res: HttpResponse) -> HttpResponse {
+        let mut i: usize = 0;
         loop {
             if i >= self.warelist.len() {
                 break;
@@ -114,39 +112,44 @@ impl HttpServer {
                     (req, res) = middleware(req, res);
                 }
             }
+            i = i + 1;
         }
+        res
     }
     fn handle_stream(&self, mut stream: TcpStream) -> std::io::Result<()> {
+        let parten = "\r\n\r\n".as_bytes();
         let mut buffer = [0; 512];
         let mut binary_http: Vec<u8> = Vec::new();
         loop {
             let len = stream.read(&mut buffer)?;
-            binary_http.append(&mut buffer.to_vec());
+            if len > 0 {
+                binary_http.append(&mut buffer.to_vec());
+            }
             if len < buffer.len() {
                 break;
             }
         }
-        let req: HttpRequest = HttpRequest::new();
-        let res: HttpResponse = HttpResponse::new();
-        self._through_ware(req, res);
+        if contains_array(binary_http.clone(), parten) {
+            let req: HttpRequest = HttpRequest::from(binary_http);
+            let res: HttpResponse = HttpResponse::new();
+            let formot = self.through_ware(req, res).formot();
+            println!("{}", String::from_utf8_lossy(&formot));
+            stream.write(&formot)?;
+        }
         Ok(())
     }
 }
-impl DealHttp for TcpStream {
-    fn read_http(&mut self) -> std::io::Result<HttpRequest> {
-        let mut buf: [u8; 512] = [0; 512];
-        let mut binary: Vec<u8> = vec![];
-        loop {
-            let readsize = self.read(&mut buf)?;
-            binary.append(&mut buf.to_vec());
-            if readsize < buf.len() {
-                break;
-            }
+fn contains_array(outer: Vec<u8>, inner: &[u8]) -> bool {
+    // Check if the inner array is longer than the outer array
+    if inner.len() > outer.len() {
+        return false;
+    }
+
+    // Check for the inner array in the outer array
+    for window in outer.windows(inner.len()) {
+        if window == inner {
+            return true;
         }
-        let res = HttpRequest::new();
-        Ok(res)
     }
-    fn write_http(self, _res: crate::HttpResponse) -> std::io::Result<()> {
-        Ok(())
-    }
+    false
 }

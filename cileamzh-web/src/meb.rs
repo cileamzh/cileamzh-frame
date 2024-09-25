@@ -1,10 +1,16 @@
 use crate::{HttpRequest, HttpResponse};
-
-pub trait DealHttp {
-    fn read_http(&mut self) -> std::io::Result<HttpRequest>;
-    fn write_http(self, res: HttpResponse) -> std::io::Result<()>;
+pub trait ToVec {
+    fn to_vec_u8(&self) -> Vec<u8>;
 }
 
-pub trait SplitByArr {
-    // fn split_by_arr(&self, p: Vec<>) {}
+impl ToVec for String {
+    fn to_vec_u8(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+impl ToVec for &str {
+    fn to_vec_u8(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
 }
