@@ -1,5 +1,11 @@
-use crate::{ware::Ware, HttpRequest, HttpResponse};
+use crate::{
+    meb::{Route, ToVec},
+    ware::Ware,
+    HttpRequest, HttpResponse,
+};
 use std::{
+    env::current_dir,
+    fs,
     io::{Read, Write},
     net::{TcpListener, TcpStream},
     path::Path,
@@ -42,17 +48,13 @@ impl HttpServer {
         if host == "localhost" {
             host = "127.0.0.1"
         }
-        if self.lst.len() == 0 {
-            let lst = TcpListener::bind(format!("{}:{}", host, port))?;
-            self.lst.push(lst);
-            for stream in self.lst[0].incoming() {
-                let stream = stream?;
-                self.handle_stream(stream).unwrap();
-            }
-            Ok(())
-        } else {
-            Ok(())
+        let lst = TcpListener::bind(format!("{}:{}", host, port))?;
+        self.lst.push(lst);
+        for stream in self.lst[0].incoming() {
+            let stream = stream?;
+            handle_stream(&self.warelist, stream).unwrap();
         }
+        Ok(())
     }
     ///Quickly listen localhost
     ///
@@ -73,13 +75,9 @@ impl HttpServer {
     /// server.mount(your_midware);
     /// server.mount(your_router);
     /// ```
-    pub fn mount(&mut self, mid: Ware) {
-        match mid {
-            Ware::Router(router) => self.warelist.push(Ware::Router(router)),
-            Ware::Middleware(middleware) => self.warelist.push(Ware::Middleware(middleware)),
-        }
+    pub fn mount<T: Route>(&mut self, ware: T) {
+        ware.mount_self(&mut self.warelist);
     }
-
     ///Set a dir as static dir.
     ///
     /// #Exmaple
@@ -93,51 +91,7 @@ impl HttpServer {
         }
     }
 
-    fn through_ware(&self, mut req: HttpRequest, mut res: HttpResponse) -> HttpResponse {
-        let mut i: usize = 0;
-        loop {
-            if i >= self.warelist.len() {
-                break;
-            }
-            match &self.warelist[i] {
-                Ware::Router(router) => {
-                    let (m, p) = (&req.method, &req.path);
-                    if (m, p) == (&router.0, &router.1) {
-                        res = router.2(req, res);
-                        print!("{}", res.status);
-                        break;
-                    }
-                }
-                Ware::Middleware(middleware) => {
-                    (req, res) = middleware(req, res);
-                }
-            }
-            i = i + 1;
-        }
-        res
-    }
-    fn handle_stream(&self, mut stream: TcpStream) -> std::io::Result<()> {
-        let parten = "\r\n\r\n".as_bytes();
-        let mut buffer = [0; 512];
-        let mut binary_http: Vec<u8> = Vec::new();
-        loop {
-            let len = stream.read(&mut buffer)?;
-            if len > 0 {
-                binary_http.append(&mut buffer.to_vec());
-            }
-            if len < buffer.len() {
-                break;
-            }
-        }
-        if contains_array(binary_http.clone(), parten) {
-            let req: HttpRequest = HttpRequest::from(binary_http);
-            let res: HttpResponse = HttpResponse::new();
-            let formot = self.through_ware(req, res).formot();
-            println!("{}", String::from_utf8_lossy(&formot));
-            stream.write(&formot)?;
-        }
-        Ok(())
-    }
+    //to handle tcpstream as http
 }
 fn contains_array(outer: Vec<u8>, inner: &[u8]) -> bool {
     // Check if the inner array is longer than the outer array
@@ -152,4 +106,85 @@ fn contains_array(outer: Vec<u8>, inner: &[u8]) -> bool {
         }
     }
     false
+}
+
+fn handle_stream(warelist: &Vec<Ware>, mut stream: TcpStream) -> std::io::Result<()> {
+    let parten = "\r\n\r\n".as_bytes();
+    let mut buffer = [0; 512];
+    let mut binary_http: Vec<u8> = Vec::new();
+    loop {
+        let len = stream.read(&mut buffer)?;
+        if len > 0 {
+            binary_http.append(&mut buffer.to_vec());
+        }
+        if len < buffer.len() {
+            break;
+        }
+    }
+    if contains_array(binary_http.clone(), parten) {
+        let req: HttpRequest = HttpRequest::from(binary_http);
+        let res: HttpResponse = HttpResponse::new();
+        let formot = through_ware(warelist, req, res).to_vec_u8();
+        stream.write(&formot)?;
+    }
+    Ok(())
+}
+
+fn through_ware(warelist: &Vec<Ware>, mut req: HttpRequest, mut res: HttpResponse) -> HttpResponse {
+    let mut ware_index: usize = 0;
+    loop {
+        if ware_index >= warelist.len() {
+            break;
+        }
+        match &warelist[ware_index] {
+            Ware::Handler(handler) => {
+                let (m, p) = (&req.method, &req.path);
+                if (m, p) == (&handler.method, &handler.path) {
+                    res = (handler.handler)(req, res);
+                    break;
+                }
+            }
+            Ware::Middleware(middleware) => {
+                (req, res) = (middleware.route)(req, res);
+            }
+            Ware::StaticDir(staticdir) => {
+                println!("{}", String::from_utf8_lossy(&req.to_vec_u8()));
+                if staticdir.path == req.path && !staticdir.index.is_empty() {
+                    let req_path = format!(
+                        "{}{}{}",
+                        current_dir().unwrap().to_string_lossy(),
+                        staticdir.dir_path,
+                        staticdir.index,
+                    );
+                    res.binary = fs::read(req_path).unwrap_or("Don't find Index".to_vec_u8());
+                    break;
+                }
+                if !(req.path.len() > staticdir.path.len()
+                    && staticdir.path == req.path[..staticdir.path.len()])
+                {
+                    continue;
+                }
+                let req_path = format!(
+                    "{}{}{}",
+                    current_dir().unwrap().to_string_lossy(),
+                    staticdir.dir_path,
+                    req.path.replace(&staticdir.path, ""),
+                );
+                let f_path = Path::new(&req_path);
+                if !(f_path.exists() && f_path.is_file()) {
+                    res.binary = "Can't Get".to_vec_u8();
+                    break;
+                }
+                res.set_status("200 OK");
+                res.binary = fs::read(f_path).unwrap_or("Fail to read file".to_vec_u8());
+                break;
+            }
+        }
+        ware_index = ware_index + 1;
+    }
+    res.set_header(&format!(
+        "Content-Length: {}",
+        (res.binary.len() + res.body.len()).to_string()
+    ));
+    res
 }

@@ -19,20 +19,6 @@ impl HttpResponse {
             binary: Vec::new(),
         }
     }
-    pub fn formot(&self) -> Vec<u8> {
-        let mut all: Vec<u8> = Vec::new();
-        all.append(&mut self.protocal.to_vec_u8());
-        all.append(&mut " ".to_vec_u8());
-        all.append(&mut self.status.to_vec_u8());
-        for header in &self.header {
-            all.append(&mut "\r\n".to_vec_u8());
-            all.append(&mut header.to_vec_u8());
-        }
-        all.append(&mut "\r\n\r\n".to_vec_u8());
-        all.append(&mut self.body.to_vec_u8());
-        all.append(&mut self.binary.to_vec());
-        all
-    }
 
     pub fn set_status(&mut self, status: &str) {
         self.status = status.to_owned();
@@ -48,5 +34,22 @@ impl HttpResponse {
 
     pub fn set_body(&mut self, body: &str) {
         self.body = body.to_owned();
+    }
+}
+
+impl ToVec for HttpResponse {
+    fn to_vec_u8(&self) -> Vec<u8> {
+        let mut all: Vec<u8> = Vec::new();
+        all.append(&mut self.protocal.to_vec_u8());
+        all.append(&mut " ".to_vec_u8());
+        all.append(&mut self.status.to_vec_u8());
+        for header in &self.header {
+            all.append(&mut "\r\n".to_vec_u8());
+            all.append(&mut header.to_vec_u8());
+        }
+        all.append(&mut "\r\n\r\n".to_vec_u8());
+        all.append(&mut self.body.to_vec_u8());
+        all.append(&mut self.binary.to_vec());
+        all
     }
 }

@@ -1,10 +1,10 @@
-use crate::HttpRequest;
+// use crate::HttpRequest;
 
-pub struct Http {}
+// pub struct Http {}
 
-impl Http {
-    pub fn connect() {
-        let res = HttpRequest::new();
-        
-    }
-}
+// impl Http {
+//     pub fn connect() {
+//         let res = HttpRequest::new();
+
+//     }
+// }

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::meb::ToVec;
 
 pub struct HttpRequest {
@@ -8,6 +10,7 @@ pub struct HttpRequest {
     pub header: Vec<String>,
     pub body: String,
     pub binary: Vec<u8>,
+    pub map: HashMap<String, String>,
 }
 impl HttpRequest {
     pub fn new() -> Self {
@@ -19,6 +22,7 @@ impl HttpRequest {
             header: Vec::new(),
             body: String::new(),
             binary: Vec::new(),
+            map: HashMap::new(),
         }
     }
 
@@ -32,6 +36,7 @@ impl HttpRequest {
             header: Vec::new(),
             body: String::new(),
             binary: Vec::new(),
+            map: HashMap::new(),
         };
 
         let r = split_buf(buf, parten.to_vec());
@@ -44,13 +49,11 @@ impl HttpRequest {
 
         let header: Vec<String> = result.map(|s| s.to_owned()).collect();
 
-        if req.binary.len() > 1 {
-            req.binary = r[1].clone();
-            req.body = String::from_utf8_lossy(&r[1]).to_string();
-        }
+        req.body = String::from_utf8_lossy(&r[1]).to_string();
+        req.binary = r[1].clone();
 
         req.method = fl[0].to_owned();
-        req.path = fl[1].split("?").nth(0).unwrap().to_owned();
+        req.path = fl[1].split("?").nth(0).unwrap_or(fl[1]).to_owned();
         req.params = fl[1].split("?").nth(1).unwrap_or("").to_owned();
         req.protocol = fl[2].to_owned();
 
@@ -69,8 +72,10 @@ impl HttpRequest {
     pub fn body(&mut self, body: &str) {
         self.body.push_str(body);
     }
+}
 
-    pub fn formot(&self) -> Vec<u8> {
+impl ToVec for HttpRequest {
+    fn to_vec_u8(&self) -> Vec<u8> {
         let mut buf: Vec<u8> = Vec::new();
         buf.append(&mut self.method.to_vec_u8());
         buf.append(&mut " ".to_vec_u8());
@@ -87,8 +92,6 @@ impl HttpRequest {
         buf
     }
 }
-
-
 
 fn split_buf(buf: Vec<u8>, pattern: Vec<u8>) -> Vec<Vec<u8>> {
     let mut result = Vec::new();

@@ -4,7 +4,6 @@ name = "cileamzh-frame"
 version = "0.0.0"
 include = ["public/web.html"]
 [dependencies]
-cileamzh-macro = {path = "./cileamzh-macro"}
 cileamzh-web = {path = "./cileamzh-web"}
 [workspace]
-members = ["cileamzh-macro", "cileamzh-web"]
+members = ["cileamzh-web"]
